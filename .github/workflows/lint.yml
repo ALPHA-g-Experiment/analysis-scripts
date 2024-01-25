@@ -1,0 +1,45 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '20 5 25 * *'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.x"
+    - name: Install ruff
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff
+    - name: Run ruff check
+      run: ruff check --output-format=sarif --output-file=ruff-results.sarif
+      continue-on-error: true
+    - name: Upload results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ruff-results.sarif
+        wait-for-processing: true
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.x"
+    - name: Install ruff
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff
+    - name: Run ruff format
+      run: ruff format --check
