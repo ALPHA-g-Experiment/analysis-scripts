@@ -44,7 +44,7 @@ df = pl.read_csv(args.infile, comment_prefix="#").filter(
     pl.col("reconstructed_z").is_between(args.min_z, args.max_z),
 )
 
-plt.hist(df.select("reconstructed_z"), bins=args.z_bins)
-plt.xlabel("z [m]")
-plt.ylabel("Counts")
+fig, axs = plt.subplots(2, 3)
+axs[0, 0].hist(df.select("reconstructed_z"), bins=args.z_bins)
+axs[0, 0].set(xlabel="z [m]", ylabel="Counts")
 plt.show()
