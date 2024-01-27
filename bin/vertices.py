@@ -15,33 +15,33 @@ Some events are definitely reconstructed outside these thresholds, but we
 most likely just want to ignore them.
 """
 parser.add_argument(
-    "--max-phi", type=float, default=math.pi, help="maximum azimuthal angle in radians"
-)
-parser.add_argument(
-    "--max-r", type=float, default=0.19, help="maximum radial coordinate in meters"
-)
-parser.add_argument(
-    "--max-t", type=float, default=float("inf"), help="maximum time in seconds"
-)
-parser.add_argument(
-    "--max-z", type=float, default=1.152, help="maximum z coordinate in meters"
-)
-parser.add_argument(
-    "--min-phi", type=float, default=-math.pi, help="minimum azimuthal angle in radians"
-)
-parser.add_argument(
-    "--min-r", type=float, default=0.0, help="minimum radial coordinate in meters"
-)
-parser.add_argument("--min-t", type=float, default=0.0, help="minimum time in seconds")
-parser.add_argument(
-    "--min-z", type=float, default=-1.152, help="minimum z coordinate in meters"
-)
-parser.add_argument(
     "--phi-bins", type=int, default=100, help="number of bins along phi"
 )
+parser.add_argument(
+    "--phi-max", type=float, default=math.pi, help="maximum azimuthal angle in radians"
+)
+parser.add_argument(
+    "--phi-min", type=float, default=-math.pi, help="minimum azimuthal angle in radians"
+)
 parser.add_argument("--r-bins", type=int, default=100, help="number of bins along r")
+parser.add_argument(
+    "--r-max", type=float, default=0.19, help="maximum radial coordinate in meters"
+)
+parser.add_argument(
+    "--r-min", type=float, default=0.0, help="minimum radial coordinate in meters"
+)
 parser.add_argument("--t-bins", type=int, default=100, help="number of bins along t")
+parser.add_argument(
+    "--t-max", type=float, default=float("inf"), help="maximum time in seconds"
+)
+parser.add_argument("--t-min", type=float, default=0.0, help="minimum time in seconds")
 parser.add_argument("--z-bins", type=int, default=100, help="number of bins along z")
+parser.add_argument(
+    "--z-max", type=float, default=1.152, help="maximum z coordinate in meters"
+)
+parser.add_argument(
+    "--z-min", type=float, default=-1.152, help="minimum z coordinate in meters"
+)
 args = parser.parse_args()
 
 df = (
@@ -53,10 +53,10 @@ df = (
         .alias("r"),
     )
     .filter(
-        pl.col("trg_time").is_between(args.min_t, args.max_t),
-        pl.col("reconstructed_z").is_between(args.min_z, args.max_z),
-        pl.col("phi").is_between(args.min_phi, args.max_phi),
-        pl.col("r").is_between(args.min_r, args.max_r),
+        pl.col("trg_time").is_between(args.t_min, args.t_max),
+        pl.col("reconstructed_z").is_between(args.z_min, args.z_max),
+        pl.col("phi").is_between(args.phi_min, args.phi_max),
+        pl.col("r").is_between(args.r_min, args.r_max),
     )
 )
 
