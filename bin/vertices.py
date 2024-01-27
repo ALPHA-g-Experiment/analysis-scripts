@@ -1,6 +1,7 @@
 import argparse
 import math
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
 
 parser = argparse.ArgumentParser(
@@ -59,24 +60,43 @@ df = (
     )
 )
 
-fig, axs = plt.subplots(2, 3)
-axs[0, 0].hist(df["reconstructed_z"], bins=args.z_bins)
-axs[0, 0].set(xlabel="z [m]", ylabel="Number of vertices")
+fig = plt.figure()
 
-axs[0, 1].hist(df["trg_time"], bins=args.t_bins)
-axs[0, 1].set(xlabel="TRG time [s]", ylabel="Number of vertices")
+ax = plt.subplot(231)
+ax.set(xlabel="z [m]", ylabel="Number of vertices")
+ax.hist(df["reconstructed_z"], bins=args.z_bins)
 
-axs[0, 2].hist2d(
+ax = plt.subplot(232)
+ax.set(xlabel="TRG time [s]", ylabel="Number of vertices")
+ax.hist(df["trg_time"], bins=args.t_bins)
+
+ax = plt.subplot(233)
+ax.set(xlabel="TRG time [s]", ylabel="z [m]")
+h = ax.hist2d(
     df["trg_time"], df["reconstructed_z"], bins=[args.t_bins, args.z_bins], cmin=1
 )
-axs[0, 2].set(xlabel="TRG time [s]", ylabel="z [m]")
+cbar = fig.colorbar(h[3])
+cbar.set_label("Number of vertices", rotation=270, labelpad=15)
 
-axs[1, 0].hist(df["r"], bins=args.r_bins)
-axs[1, 0].set(xlabel="r [m]", ylabel="Number of vertices")
+ax = plt.subplot(234)
+ax.set(xlabel="r [m]", ylabel="Number of vertices")
+ax.hist(df["r"], bins=args.r_bins)
 
-axs[1, 1].hist(df["phi"], bins=args.phi_bins)
-axs[1, 1].set(xlabel="phi [rad]", ylabel="Number of vertices")
+ax = plt.subplot(235)
+ax.set(xlabel="phi [rad]", ylabel="Number of vertices")
+ax.hist(df["phi"], bins=args.phi_bins)
 
-axs[1, 2].hist2d(df["reconstructed_x"], df["reconstructed_y"], bins=100, cmin=1)
+ax = plt.subplot(236, projection="polar")
+ax.set(xticklabels=[], yticklabels=[])
+ax.grid(False)
+hist, phi_edges, r_edges = np.histogram2d(
+    df["phi"], df["r"], bins=[args.phi_bins, args.r_bins]
+)
+# There is no cmin equivalent in np.histogram2d
+hist[hist < 1] = np.nan
+X, Y = np.meshgrid(phi_edges, r_edges)
+pc = ax.pcolormesh(X, Y, hist.T)
+cbar = fig.colorbar(pc)
+cbar.set_label("Number of vertices", rotation=270, labelpad=15)
 
 plt.show()
