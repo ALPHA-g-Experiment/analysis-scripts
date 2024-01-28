@@ -1,5 +1,6 @@
 import argparse
 import math
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
@@ -80,7 +81,16 @@ cbar.set_label("Number of vertices", rotation=270, labelpad=15)
 
 ax = plt.subplot(234)
 ax.set(xlabel="r [m]", ylabel="Number of vertices")
-ax.hist(df["r"], bins=args.r_bins)
+hist, r_edges, _ = ax.hist(df["r"], bins=args.r_bins)
+ax = ax.twinx()
+ax.set(yticklabels=[])
+norm = hist / (math.pi * (r_edges[1:] ** 2 - r_edges[:-1] ** 2))
+ax.hist(r_edges[:-1], r_edges, weights=norm, histtype="step", color="tab:orange")
+ax.legend(
+    handles=[
+        matplotlib.lines.Line2D([], [], c="tab:orange", label="Radial density [a.u.]")
+    ]
+)
 
 ax = plt.subplot(235)
 ax.set(xlabel="phi [rad]", ylabel="Number of vertices")
