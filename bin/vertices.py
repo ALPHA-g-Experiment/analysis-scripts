@@ -86,17 +86,21 @@ ax = plt.subplot(235)
 ax.set(xlabel="phi [rad]", ylabel="Number of vertices")
 ax.hist(df["phi"], bins=args.phi_bins)
 
-ax = plt.subplot(236, projection="polar")
-ax.set(xticklabels=[], yticklabels=[])
-ax.grid(False)
+axc = plt.subplot(236)
+axc.set(xlabel="x [m]", ylabel="y [m]")
+axc.set_aspect("equal")
 hist, phi_edges, r_edges = np.histogram2d(
     df["phi"], df["r"], bins=[args.phi_bins, args.r_bins]
 )
-# There is no cmin equivalent in np.histogram2d
 hist[hist < 1] = np.nan
+axc.set_xlim(-r_edges[-1], r_edges[-1])
+axc.set_ylim(-r_edges[-1], r_edges[-1])
+ax = plt.subplot(236, projection="polar")
+ax.set(xticklabels=[], yticklabels=[])
+ax.grid(False)
 X, Y = np.meshgrid(phi_edges, r_edges)
 pc = ax.pcolormesh(X, Y, hist.T)
-cbar = fig.colorbar(pc)
+cbar = fig.colorbar(pc, ax=[ax, axc], location="right")
 cbar.set_label("Number of vertices", rotation=270, labelpad=15)
 
 plt.show()
