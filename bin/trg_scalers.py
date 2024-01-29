@@ -41,17 +41,19 @@ for name, included in columns.items():
     know by how much they were incremented. The best we can do is assume that
     those counts are evenly spread out over the time interval.
     """
-    col_df = (
+    linearly_spaced_times = (
         df.filter(pl.col(name).is_not_null())
         .rename({"trg_time": "t_right"})
         .with_columns(
-            (pl.col("t_right") - pl.col("t_right").diff()).alias("t_left"),
-            pl.col(name).diff().alias("counts"),
+            t_left=pl.col("t_right") - pl.col("t_right").diff(),
+            counts=pl.col(name).diff(),
         )
         .filter(pl.col("counts") > 0)
-        .select(["t_left", "t_right", "counts"])
+        .select(
+            "t_left",
+            step=((pl.col("t_right") - pl.col("t_left")) / pl.col("counts")),
+            i=pl.int_ranges(1, pl.col("counts") + 1),
+        )
+        .explode("i")
+        .select(times=pl.col("t_left") + pl.col("step") * pl.col("i"))
     )
-
-    times = []
-    for t_left, t_right, counts in col_df.rows():
-        times.extend(np.linspace(t_left, t_right, counts + 1)[1:])
