@@ -1,4 +1,5 @@
 import argparse
+import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 
@@ -57,3 +58,10 @@ for name, included in columns.items():
         .explode("i")
         .select(times=pl.col("t_left") + pl.col("step") * pl.col("i"))
     )
+
+    plt.hist(linearly_spaced_times, bins=t_edges, histtype="step", label=name)
+
+plt.xlabel("TRG time [s]")
+plt.ylabel("Counts")
+plt.legend()
+plt.show()
