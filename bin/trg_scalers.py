@@ -1,4 +1,5 @@
 import argparse
+from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
@@ -63,5 +64,9 @@ for name, included in columns.items():
 
 plt.xlabel("TRG time [s]")
 plt.ylabel("Counts")
-plt.legend()
+
+handles, labels = plt.gca().get_legend_handles_labels()
+new_handles = [Line2D([], [], c=h.get_edgecolor()) for h in handles]
+plt.legend(handles=new_handles, labels=labels)
+
 plt.show()
