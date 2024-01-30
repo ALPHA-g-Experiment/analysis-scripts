@@ -43,7 +43,7 @@ for name, included in columns.items():
     know by how much they were incremented. The best we can do is assume that
     those counts are evenly spread out over the time interval.
     """
-    linearly_spaced_times = (
+    times = np.array(
         df.filter(pl.col(name).is_not_null())
         .rename({"trg_time": "t_right"})
         .with_columns(
@@ -59,8 +59,12 @@ for name, included in columns.items():
         .explode("i")
         .select(times=pl.col("t_left") + pl.col("step") * pl.col("i"))
     )
+    if df[name][0] > 0:
+        times = np.append(df["trg_time"][0], times)
 
-    plt.hist(linearly_spaced_times, bins=t_edges, histtype="step", label=name)
+    plt.hist(
+        times, bins=t_edges, histtype="step", label=f"{name} ({times.size} counts)"
+    )
 
 plt.xlabel("TRG time [s]")
 plt.ylabel("Counts")
