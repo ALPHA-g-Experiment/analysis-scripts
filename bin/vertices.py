@@ -48,10 +48,8 @@ args = parser.parse_args()
 df = (
     pl.read_csv(args.infile, comment_prefix="#")
     .with_columns(
-        pl.arctan2("reconstructed_y", "reconstructed_x").alias("phi"),
-        (pl.col("reconstructed_x").pow(2) + pl.col("reconstructed_y").pow(2))
-        .sqrt()
-        .alias("r"),
+        phi=pl.arctan2("reconstructed_y", "reconstructed_x"),
+        r=(pl.col("reconstructed_x").pow(2) + pl.col("reconstructed_y").pow(2)).sqrt(),
     )
     .filter(
         pl.col("trg_time").is_between(args.t_min, args.t_max),
