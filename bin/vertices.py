@@ -63,15 +63,15 @@ df = (
 
 fig = plt.figure()
 
-ax = plt.subplot(231)
+ax = fig.add_subplot(231)
 ax.set(xlabel="z [m]", ylabel="Number of vertices")
 ax.hist(df["reconstructed_z"], bins=args.z_bins)
 
-ax = plt.subplot(232)
+ax = fig.add_subplot(232)
 ax.set(xlabel="TRG time [s]", ylabel="Number of vertices")
 ax.hist(df["trg_time"], bins=args.t_bins)
 
-ax = plt.subplot(233)
+ax = fig.add_subplot(233)
 ax.set(xlabel="TRG time [s]", ylabel="z [m]")
 h = ax.hist2d(
     df["trg_time"], df["reconstructed_z"], bins=[args.t_bins, args.z_bins], cmin=1
@@ -79,7 +79,7 @@ h = ax.hist2d(
 cbar = fig.colorbar(h[3])
 cbar.set_label("Number of vertices", rotation=270, labelpad=15)
 
-ax = plt.subplot(234)
+ax = fig.add_subplot(234)
 ax.set(xlabel="r [m]", ylabel="Number of vertices")
 hist, r_edges, _ = ax.hist(df["r"], bins=args.r_bins)
 ax = ax.twinx()
@@ -92,11 +92,11 @@ ax.legend(
     ]
 )
 
-ax = plt.subplot(235)
+ax = fig.add_subplot(235)
 ax.set(xlabel="phi [rad]", ylabel="Number of vertices")
 ax.hist(df["phi"], bins=args.phi_bins)
 
-axc = plt.subplot(236)
+axc = fig.add_subplot(236)
 axc.set(xlabel="x [m]", ylabel="y [m]")
 axc.set_aspect("equal")
 hist, phi_edges, r_edges = np.histogram2d(
@@ -105,7 +105,7 @@ hist, phi_edges, r_edges = np.histogram2d(
 hist[hist < 1] = np.nan
 axc.set_xlim(-r_edges[-1], r_edges[-1])
 axc.set_ylim(-r_edges[-1], r_edges[-1])
-ax = plt.subplot(236, projection="polar")
+ax = fig.add_subplot(236, projection="polar")
 ax.set(xticklabels=[], yticklabels=[])
 ax.grid(False)
 X, Y = np.meshgrid(phi_edges, r_edges)
