@@ -60,3 +60,51 @@ def event_table(xml_string: str) -> list[Event]:
             events.append(Event(name, description))
 
     return events
+
+
+if __name__ == "__main__":
+    import argparse
+    import polars as pl
+
+    parser = argparse.ArgumentParser(
+        description="Extract sequencer events information for a single run."
+    )
+    parser.add_argument("sequencer_csv", help="path to the sequencer CSV file")
+    args = parser.parse_args()
+
+    sequencer_df = pl.read_csv(args.sequencer_csv, comment_prefix="#").select(
+        "midas_timestamp",
+        sequencer_name=pl.col("xml").map_elements(sequencer_name),
+        event_table=pl.col("xml").map_elements(event_table, return_dtype=pl.Object),
+    )
+
+    def pretty_string(events: list[Event]) -> str:
+        dumps = []
+        for event in events:
+            description = event.description.strip('"')
+            if event.name == "startDump":
+                dumps.append("Start " + description)
+            elif (
+                event.name == "stopDump"
+                and dumps
+                and dumps[-1] == "Start " + description
+            ):
+                dumps[-1] = description
+            else:
+                dumps.append(description)
+
+        return "\n".join(dumps)
+
+    sequencer_df = sequencer_df.select(
+        "midas_timestamp",
+        "sequencer_name",
+        pl.col("event_table").map_elements(pretty_string),
+    )
+    with pl.Config(
+        fmt_str_lengths=2**15 - 1,
+        tbl_formatting="ASCII_HORIZONTAL_ONLY",
+        tbl_hide_column_data_types=True,
+        tbl_hide_dataframe_shape=True,
+        tbl_rows=-1,
+    ):
+        print(sequencer_df)
