@@ -50,10 +50,21 @@ def pretty_string(events: list[SequencerEvent]) -> str:
 
 
 parser = argparse.ArgumentParser(
-    description="Extract sequencer events information for a single run."
+    description="Extract sequencer events information for a single run.",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument("sequencer_csv", help="path to the sequencer CSV file")
+group = parser.add_argument_group(
+    "advanced",
+    """Find the Chronobox timestamp of all sequencer events.
+Write output as CSV with the following columns:
+sequencer_name,event_name,event_description,chronobox_timestamp""",
+)
+group.add_argument("--odb-json", help="path to the ODB JSON file")
+group.add_argument("--chronobox-csv", help="path to the Chronobox CSV file")
 args = parser.parse_args()
+if bool(args.odb_json) ^ bool(args.chronobox_csv):
+    parser.error("--odb-json and --chronobox-csv must be used together")
 
 sequencer_df = pl.read_csv(args.sequencer_csv, comment_prefix="#").select(
     "midas_timestamp",
@@ -61,16 +72,17 @@ sequencer_df = pl.read_csv(args.sequencer_csv, comment_prefix="#").select(
     event_table=pl.col("xml").map_elements(event_table, return_dtype=pl.Object),
 )
 
-sequencer_df = sequencer_df.select(
-    "midas_timestamp",
-    "sequencer_name",
-    pl.col("event_table").map_elements(pretty_string),
-)
-with pl.Config(
-    fmt_str_lengths=2**15 - 1,
-    tbl_formatting="ASCII_HORIZONTAL_ONLY",
-    tbl_hide_column_data_types=True,
-    tbl_hide_dataframe_shape=True,
-    tbl_rows=-1,
-):
-    print(sequencer_df)
+if args.odb_json is None and args.chronobox_csv is None:
+    sequencer_df = sequencer_df.select(
+        "midas_timestamp",
+        "sequencer_name",
+        pl.col("event_table").map_elements(pretty_string),
+    )
+    with pl.Config(
+        fmt_str_lengths=2**15 - 1,
+        tbl_formatting="ASCII_HORIZONTAL_ONLY",
+        tbl_hide_column_data_types=True,
+        tbl_hide_dataframe_shape=True,
+        tbl_rows=-1,
+    ):
+        print(sequencer_df)
