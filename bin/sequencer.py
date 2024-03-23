@@ -46,7 +46,7 @@ group = parser.add_argument_group(
     "advanced",
     """Find the Chronobox timestamp of all sequencer events.
 Write output as CSV with the following columns:
-sequencer_name,event_name,event_description,chronobox_timestamp""",
+sequencer_name,event_name,event_description,chronobox_time""",
 )
 group.add_argument("--odb-json", help="path to the ODB JSON file")
 group.add_argument("--chronobox-csv", help="path to the Chronobox CSV file")
@@ -159,10 +159,7 @@ else:
             seq_df.with_row_index()
             .join(
                 cb_df.with_row_index("running_index")
-                .filter(
-                    pl.col("board").eq(seq_running.board)
-                    & pl.col("channel").eq(seq_running.channel)
-                )
+                .filter(board=seq_running.board, channel=seq_running.channel)
                 .with_columns(
                     next_running_index=pl.col("running_index").shift(
                         -1, fill_value=cb_df.select(pl.len())
@@ -190,6 +187,10 @@ else:
 
         cb_df = (
             cb_df.with_row_index()
+            .filter(
+                (pl.col("board") != seq_running.board)
+                | (pl.col("channel") != seq_running.channel)
+            )
             .join(
                 seq_df.explode("event_table").with_columns(
                     index=(
@@ -201,10 +202,6 @@ else:
                 ),
                 on="index",
                 how="left",
-            )
-            .filter(
-                (pl.col("board") != seq_running.board)
-                | (pl.col("channel") != seq_running.channel)
             )
             .unnest("event_table")
             .select(
@@ -218,7 +215,24 @@ else:
         )
         if cb_df["event_name"].null_count() > 0:
             raise ValueError(f"found extra Chronobox hits for `{name}`")
+        if (
+            cb_df.filter(board=start_dump.board, channel=start_dump.channel)
+            .select(pl.col("event_name").eq("startDump").all().not_())
+            .item()
+        ) or (
+            cb_df.filter(board=stop_dump.board, channel=stop_dump.channel)
+            .select(pl.col("event_name").eq("stopDump").all().not_())
+            .item()
+        ):
+            raise ValueError(f"found event and Chronobox mismatch for `{name}`")
 
-        result = result.vstack(cb_df)
+        cb_df = cb_df.select(
+            "sequencer_name",
+            "event_name",
+            pl.col("event_description").str.strip_chars('"'),
+            "chronobox_time",
+        )
+        result.vstack(cb_df, in_place=True)
 
     result = result.sort("chronobox_time")
+    print(result.write_csv())
