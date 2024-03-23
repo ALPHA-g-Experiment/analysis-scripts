@@ -62,17 +62,14 @@ sequencer_df = pl.read_csv(args.sequencer_csv, comment_prefix="#").select(
 
 if args.odb_json is None and args.chronobox_csv is None:
 
-    def pretty_string(events: list[SequencerEvent]) -> str:
+    def pretty_string(events) -> str:
         dumps = []
         for event in events:
-            description = event.description.strip('"')
-            if event.name == "startDump":
+            description = event["description"].strip('"')
+            name = event["name"]
+            if name == "startDump":
                 dumps.append("Start " + description)
-            elif (
-                event.name == "stopDump"
-                and dumps
-                and dumps[-1] == "Start " + description
-            ):
+            elif name == "stopDump" and dumps and dumps[-1] == "Start " + description:
                 dumps[-1] = description
             else:
                 dumps.append(description)
