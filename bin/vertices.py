@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(
     description="Visualize the reconstructed annihilation vertices for a single run",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
-parser.add_argument("infile", help="path to the reconstructed vertices CSV file")
+parser.add_argument("vertices_csv", help="path to the reconstructed vertices CSV file")
 """
 All default thresholds represent the detector dimensions.
 Some events are definitely reconstructed outside these thresholds, but we
@@ -48,7 +48,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 df = (
-    pl.read_csv(args.infile, comment_prefix="#")
+    pl.read_csv(args.vertices_csv, comment_prefix="#")
     .with_columns(
         phi=pl.arctan2("reconstructed_y", "reconstructed_x"),
         r=(pl.col("reconstructed_x").pow(2) + pl.col("reconstructed_y").pow(2)).sqrt(),
