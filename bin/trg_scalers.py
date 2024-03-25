@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(
     description="Visualize the TRG scalers for a single run.",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
-parser.add_argument("infile", help="path to the TRG scalers CSV file")
+parser.add_argument("trg_scalers_csv", help="path to the TRG scalers CSV file")
 parser.add_argument("--t-bins", type=int, default=100, help="number of bins along t")
 parser.add_argument(
     "--t-max", type=float, default=float("inf"), help="maximum time in seconds"
@@ -31,7 +31,7 @@ columns = {
     "output": not args.remove_output_counter,
 }
 
-df = pl.read_csv(args.infile, comment_prefix="#").filter(
+df = pl.read_csv(args.trg_scalers_csv, comment_prefix="#").filter(
     pl.col("trg_time").is_between(args.t_min, args.t_max)
 )
 # All histograms should have the same binning
