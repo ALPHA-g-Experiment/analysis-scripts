@@ -33,7 +33,8 @@ def event_table(xml_string: str) -> list[SequencerEvent]:
         if name == "" or description == "":
             raise ValueError("error finding event table in XML")
         else:
-            events.append(SequencerEvent(name, description))
+            # https://github.com/pola-rs/polars/issues/15425
+            events.append(SequencerEvent(name, description)._asdict())
     return events
 
 
