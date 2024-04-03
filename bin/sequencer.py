@@ -33,7 +33,8 @@ def event_table(xml_string: str) -> list[SequencerEvent]:
         if name == "" or description == "":
             raise ValueError("error finding event table in XML")
         else:
-            events.append(SequencerEvent(name, description))
+            # https://github.com/pola-rs/polars/issues/15425
+            events.append(SequencerEvent(name, description)._asdict())
     return events
 
 
@@ -69,10 +70,13 @@ if args.odb_json is None and args.chronobox_csv is None:
             name = event["name"]
             if name == "startDump":
                 dumps.append("Start " + description)
-            elif name == "stopDump" and dumps and dumps[-1] == "Start " + description:
-                dumps[-1] = description
+            elif name == "stopDump":
+                if dumps and dumps[-1] == "Start " + description:
+                    dumps[-1] = description
+                else:
+                    dumps.append("Stop " + description)
             else:
-                dumps.append(description)
+                raise ValueError(f"unknown event `{name} ({description})`")
         return "\n".join(dumps)
 
     sequencer_df = sequencer_df.select(
