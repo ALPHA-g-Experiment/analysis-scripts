@@ -36,6 +36,10 @@ df = pl.read_csv(args.trg_scalers_csv, comment_prefix="#").filter(
 )
 # All histograms should have the same binning
 _, t_edges = np.histogram(df["trg_time"], bins=args.t_bins)
+t_bin_width = t_edges[1] - t_edges[0]
+
+text = r"$\bf{Bin\ width:}$" + f" {t_bin_width:.2E} s"
+plt.figtext(0.005, 0.01, text)
 
 for name, included in columns.items():
     if not included:
