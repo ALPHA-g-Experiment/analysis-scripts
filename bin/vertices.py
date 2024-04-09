@@ -60,6 +60,7 @@ df = (
         pl.col("r").is_between(args.r_min, args.r_max),
     )
 )
+num_vertices = len(df)
 
 fig = plt.figure()
 
@@ -73,10 +74,12 @@ ax.hist(df["trg_time"], bins=args.t_bins)
 
 ax = fig.add_subplot(233)
 ax.set(xlabel="TRG time [s]", ylabel="z [m]")
-h = ax.hist2d(
+_, t_edges, z_edges, mesh = ax.hist2d(
     df["trg_time"], df["reconstructed_z"], bins=[args.t_bins, args.z_bins], cmin=1
 )
-cbar = fig.colorbar(h[3])
+t_bin_width = t_edges[1] - t_edges[0]
+z_bin_width = z_edges[1] - z_edges[0]
+cbar = fig.colorbar(mesh)
 cbar.set_label("Number of vertices", rotation=270, labelpad=15)
 
 ax = fig.add_subplot(234)
@@ -103,6 +106,8 @@ hist, phi_edges, r_edges = np.histogram2d(
     df["phi"], df["r"], bins=[args.phi_bins, args.r_bins]
 )
 hist[hist < 1] = np.nan
+phi_bin_width = phi_edges[1] - phi_edges[0]
+r_bin_width = r_edges[1] - r_edges[0]
 axc.set_xlim(-r_edges[-1], r_edges[-1])
 axc.set_ylim(-r_edges[-1], r_edges[-1])
 ax = fig.add_subplot(236, projection="polar")
@@ -112,5 +117,18 @@ X, Y = np.meshgrid(phi_edges, r_edges)
 pc = ax.pcolormesh(X, Y, hist.T)
 cbar = fig.colorbar(pc, ax=[ax, axc], location="right")
 cbar.set_label("Number of vertices", rotation=270, labelpad=15)
+
+text = "\n".join(
+    [
+        r"$\bf{Bin\ widths:}$",
+        r"$\Delta z$: {:.2E} m".format(z_bin_width),
+        r"$\Delta t$: {:.2E} s".format(t_bin_width),
+        r"$\Delta r$: {:.2E} m".format(r_bin_width),
+        r"$\Delta \phi$: {:.2E} rad".format(phi_bin_width),
+        "",
+        r"$\bf{Number\ of\ vertices:}$" + f" {num_vertices}",
+    ]
+)
+fig.text(0.005, 0.01, text)
 
 plt.show()
