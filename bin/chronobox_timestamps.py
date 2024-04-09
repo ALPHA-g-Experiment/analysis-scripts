@@ -25,9 +25,18 @@ df = pl.read_csv(args.chronobox_csv, comment_prefix="#").filter(
     pl.col("leading_edge"),
 )
 
-plt.hist(df["chronobox_time"], bins=args.t_bins)
+_, t_edges, _ = plt.hist(df["chronobox_time"], bins=args.t_bins)
+t_bin_width = t_edges[1] - t_edges[0]
 
 plt.xlabel("Chronobox time [s]")
 plt.ylabel("Counts")
+
+text = "\n".join(
+    [
+        r"$\bf{Bin\ width:}$" + f" {t_bin_width:.2E} s",
+        r"$\bf{Number\ of\ hits:}$" + f" {len(df)}",
+    ]
+)
+plt.figtext(0.005, 0.01, text)
 
 plt.show()
