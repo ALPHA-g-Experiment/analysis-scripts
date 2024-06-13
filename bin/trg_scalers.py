@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 parser.add_argument("trg_scalers_csv", help="path to the TRG scalers CSV file")
+parser.add_argument("--output", help="write output to `OUTPUT`")
 parser.add_argument("--t-bins", type=int, default=100, help="number of bins along t")
 parser.add_argument(
     "--t-max", type=float, default=float("inf"), help="maximum time in seconds"
@@ -39,7 +40,7 @@ _, t_edges = np.histogram(df["trg_time"], bins=args.t_bins)
 t_bin_width = t_edges[1] - t_edges[0]
 
 text = r"$\bf{Bin\ width:}$" + f" {t_bin_width:.2E} s"
-plt.figtext(0.005, 0.01, text)
+plt.figtext(0.005, 0.01, text, fontsize=8)
 
 for name, included in columns.items():
     if not included:
@@ -78,5 +79,9 @@ plt.ylabel("Counts")
 handles, labels = plt.gca().get_legend_handles_labels()
 new_handles = [Line2D([], [], c=h.get_edgecolor()) for h in handles]
 plt.legend(handles=new_handles, labels=labels)
+plt.tight_layout()
 
-plt.show()
+if args.output:
+    plt.savefig(args.output)
+else:
+    plt.show()

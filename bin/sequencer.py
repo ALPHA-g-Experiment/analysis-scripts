@@ -43,6 +43,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument("sequencer_csv", help="path to the sequencer CSV file")
+parser.add_argument("--output", help="write output to `OUTPUT`")
 group = parser.add_argument_group(
     "advanced",
     """Find the Chronobox timestamp of all sequencer events.
@@ -91,7 +92,11 @@ if args.odb_json is None and args.chronobox_csv is None:
         tbl_hide_dataframe_shape=True,
         tbl_rows=-1,
     ):
-        print(sequencer_df)
+        if args.output:
+            with open(args.output, "w") as f:
+                f.write(str(sequencer_df))
+        else:
+            print(sequencer_df)
 else:
 
     def sequence_running_channel_name(sequencer_name: str) -> str:
@@ -236,4 +241,7 @@ else:
         result.vstack(cb_df, in_place=True)
 
     result = result.sort("chronobox_time")
-    print(result.write_csv())
+    if args.output:
+        result.write_csv(args.output)
+    else:
+        print(result.write_csv())
