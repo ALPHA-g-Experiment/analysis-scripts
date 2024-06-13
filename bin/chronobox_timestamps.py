@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument("chronobox_csv", help="path to the Chronobox timestamps CSV file")
 parser.add_argument("board_name", help="board name (e.g. 'cb01')")
 parser.add_argument("channel_number", type=int, help="channel number")
+parser.add_argument("--output", help="write output to `OUTPUT`")
 parser.add_argument("--t-bins", type=int, default=100, help="number of bins along t")
 parser.add_argument(
     "--t-max", type=float, default=float("inf"), help="maximum time in seconds"
@@ -37,6 +38,10 @@ text = "\n".join(
         r"$\bf{Number\ of\ hits:}$" + f" {len(df)}",
     ]
 )
-plt.figtext(0.005, 0.01, text)
+plt.figtext(0.005, 0.01, text, fontsize=6)
+plt.tight_layout()
 
-plt.show()
+if args.output:
+    plt.savefig(args.output)
+else:
+    plt.show()
