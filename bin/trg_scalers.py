@@ -40,7 +40,7 @@ _, t_edges = np.histogram(df["trg_time"], bins=args.t_bins)
 t_bin_width = t_edges[1] - t_edges[0]
 
 text = r"$\bf{Bin\ width:}$" + f" {t_bin_width:.2E} s"
-plt.figtext(0.005, 0.01, text)
+plt.figtext(0.005, 0.01, text, fontsize=8)
 
 for name, included in columns.items():
     if not included:
