@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 parser.add_argument("vertices_csv", help="path to the reconstructed vertices CSV file")
+parser.add_argument("--output", help="write output to `OUTPUT`")
 """
 All default thresholds represent the detector dimensions.
 Some events are definitely reconstructed outside these thresholds, but we
@@ -62,7 +63,7 @@ df = (
 )
 num_vertices = len(df)
 
-fig = plt.figure()
+fig = plt.figure(figsize=(19, 10), dpi=100)
 
 ax = fig.add_subplot(231)
 ax.set(xlabel="z [m]", ylabel="Number of vertices")
@@ -131,4 +132,7 @@ text = "\n".join(
 )
 fig.text(0.005, 0.01, text)
 
-plt.show()
+if args.output:
+    plt.savefig(args.output, bbox_inches="tight")
+else:
+    plt.show()
