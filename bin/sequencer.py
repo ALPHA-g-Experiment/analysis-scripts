@@ -58,8 +58,11 @@ if bool(args.odb_json) ^ bool(args.chronobox_csv):
 
 sequencer_df = pl.read_csv(args.sequencer_csv, comment_prefix="#").select(
     "midas_timestamp",
-    sequencer_name=pl.col("xml").map_elements(sequencer_name),
-    event_table=pl.col("xml").map_elements(event_table),
+    sequencer_name=pl.col("xml").map_elements(sequencer_name, return_dtype=pl.String),
+    event_table=pl.col("xml").map_elements(
+        event_table,
+        return_dtype=pl.List(pl.Struct({"name": pl.String, "description": pl.String})),
+    ),
 )
 
 if args.odb_json is None and args.chronobox_csv is None:
@@ -83,7 +86,7 @@ if args.odb_json is None and args.chronobox_csv is None:
     sequencer_df = sequencer_df.select(
         "midas_timestamp",
         "sequencer_name",
-        pl.col("event_table").map_elements(pretty_string),
+        pl.col("event_table").map_elements(pretty_string, return_dtype=pl.String),
     )
     with pl.Config(
         fmt_str_lengths=2**15 - 1,
