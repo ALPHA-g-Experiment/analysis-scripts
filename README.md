@@ -10,16 +10,21 @@ package.
 
 ## Getting Started
 
-Clone the repository and install the required dependencies:
+Clone the repository, setup a virtual environment, and install the required
+dependencies:
 
 ```bash
 git clone https://github.com/ALPHA-g-Experiment/analysis-scripts.git
 cd analysis-scripts
-pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
 ```
 
 Run each script with the `--help` flag to see the available options, e.g.:
 
 ```bash
-./bin/vertices.py --help
+cd bin
+python3 vertices.py --help
 ```
