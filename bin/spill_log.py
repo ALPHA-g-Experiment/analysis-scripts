@@ -53,48 +53,43 @@ chronobox_df = (
     .select("channel_name", "chronobox_time")
 )
 
-"""
-If you are reading this, go to this link and check if that PR has been merged:
-https://github.com/pola-rs/polars/pull/18365
-
-If it has, please let Daniel know. The following gymnastics can be greatly
-simplified by non-equi joins from the PR.
-"""
-
-chronobox_df = chronobox_df.drop_nulls().sort("chronobox_time").with_row_index()
+# The following gymnastics can be greatly simplified by non-equi joins, but this
+# approach scales better with the number of chronobox events and multiple levels
+# of nested windows (doesn't require to `explode` events in every window).
+chronobox_df = (
+    chronobox_df.drop_nulls().sort("channel_name", "chronobox_time").with_row_index()
+)
 spill_log_df = (
-    windows_df.sort("start_time")
+    windows_df.join(chronobox_df.select(pl.col("channel_name").unique()), how="cross")
+    .sort("channel_name", "start_time")
     .join_asof(
         chronobox_df,
         left_on="start_time",
         right_on="chronobox_time",
         strategy="forward",
+        by="channel_name",
     )
-    .drop("channel_name", "chronobox_time")
+    .drop("chronobox_time")
     .rename({"index": "first_index"})
-    .sort("stop_time")
+    .sort("channel_name", "stop_time")
     .join_asof(
         chronobox_df,
         left_on="stop_time",
         right_on="chronobox_time",
         strategy="backward",
+        by="channel_name",
     )
-    .drop("channel_name", "chronobox_time")
+    .drop("chronobox_time")
     .rename({"index": "last_index"})
-    .with_columns(
-        index=pl.int_ranges(pl.col.first_index, pl.col.last_index + 1, dtype=pl.UInt32)
-    )
-    .explode("index")
-    .join(chronobox_df, on="index", how="inner")
+    .with_columns(counts=pl.col("last_index") + 1 - pl.col("first_index"))
     .pivot(
         on="channel_name",
         index=["sequencer_name", "event_description", "start_time", "stop_time"],
-        aggregate_function="len",
-        values="index",
+        values="counts",
         sort_columns=True,
     )
     .fill_null(0)
-    .sort("start_time")
+    .sort("start_time", "stop_time")
 )
 
 if args.output:
