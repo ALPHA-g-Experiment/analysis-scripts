@@ -16,6 +16,12 @@ parser.add_argument(
 )
 parser.add_argument("odb_json", help="path to the ODB JSON file")
 parser.add_argument("chronobox_csv", help="path to the Chronobox timestamps CSV file")
+# Use the TRG scalers to give an approximate number of input trigger counters.
+# Given the frequency of the TRG  output counter, this is a good enough
+# approximation. An exact count would need the chronobox_csv output to include
+# the cbtrg, which it currently doesn't (and probably never will because it
+# makes the CSV files huge and it's not really necessary).
+parser.add_argument("trg_scalers_csv", help="path to the TRG scalers CSV file")
 parser.add_argument("--output", help="write output to `OUTPUT`")
 args = parser.parse_args()
 
@@ -59,7 +65,7 @@ chronobox_df = (
 chronobox_df = (
     chronobox_df.drop_nulls().sort("channel_name", "chronobox_time").with_row_index()
 )
-spill_log_df = (
+cb_spill_log_df = (
     windows_df.join(chronobox_df.select(pl.col("channel_name").unique()), how="cross")
     .sort("channel_name", "start_time")
     .join_asof(
@@ -87,6 +93,40 @@ spill_log_df = (
         index=["sequencer_name", "event_description", "start_time", "stop_time"],
         values="counts",
         sort_columns=True,
+    )
+)
+
+trg_scalers_df = pl.read_csv(args.trg_scalers_csv, comment_prefix="#").sort("trg_time")
+trg_spill_log_df = (
+    windows_df.sort("start_time")
+    .join_asof(
+        trg_scalers_df,
+        left_on="start_time",
+        right_on="trg_time",
+        strategy="forward",
+    )
+    .drop("serial_number", "trg_time", "drift_veto", "scaledown", "pulser", "output")
+    .rename({"input": "first_input"})
+    .sort("stop_time")
+    .join_asof(
+        trg_scalers_df,
+        left_on="stop_time",
+        right_on="trg_time",
+        strategy="backward",
+    )
+    .drop("serial_number", "trg_time", "drift_veto", "scaledown", "pulser", "output")
+    .rename({"input": "last_input"})
+    .with_columns(
+        trg_approx_input=(pl.col("last_input") - pl.col("first_input")).clip(0)
+    )
+    .drop("first_input", "last_input")
+)
+
+spill_log_df = (
+    cb_spill_log_df.join(
+        trg_spill_log_df,
+        on=["sequencer_name", "event_description", "start_time", "stop_time"],
+        how="left",
     )
     .fill_null(0)
     .sort("start_time", "stop_time")
