@@ -59,6 +59,22 @@ chronobox_df = (
     .select("channel_name", "chronobox_time")
 )
 
+trg_scalers_df = pl.read_csv(
+    args.trg_scalers_csv,
+    comment_prefix="#",
+    # Schema is necessary because this CSV can be empty (and that should still
+    # be a valid spill log, just with TRG counters set to 0).
+    schema={
+        "serial_number": pl.Int64,
+        "trg_time": pl.Float64,
+        "input": pl.Int64,
+        "drift_veto": pl.Int64,
+        "scaledown": pl.Int64,
+        "pulser": pl.Int64,
+        "output": pl.Int64,
+    },
+)
+
 # The following gymnastics can be greatly simplified by non-equi joins, but this
 # approach scales better with the number of chronobox events and multiple levels
 # of nested windows (doesn't require to `explode` events in every window).
@@ -96,7 +112,7 @@ cb_spill_log_df = (
     )
 )
 
-trg_scalers_df = pl.read_csv(args.trg_scalers_csv, comment_prefix="#").sort("trg_time")
+trg_scalers_df.sort("trg_time")
 trg_spill_log_df = (
     windows_df.sort("start_time")
     .join_asof(
