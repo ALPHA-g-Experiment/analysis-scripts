@@ -35,10 +35,9 @@ columns = {
 df = pl.read_csv(args.trg_scalers_csv, comment_prefix="#").filter(
     pl.col("trg_time").is_between(args.t_min, args.t_max)
 )
-# All histograms should have the same binning
-_, t_edges = np.histogram(df["trg_time"], bins=args.t_bins)
-t_bin_width = t_edges[1] - t_edges[0]
 
+t_max = args.t_max if args.t_max < float("inf") else df["trg_time"].max()
+t_edges, t_bin_width = np.linspace(args.t_min, t_max, args.t_bins + 1, retstep=True)
 text = r"$\bf{Bin\ width:}$" + f" {t_bin_width:.2E} s"
 plt.figtext(0.005, 0.01, text, fontsize=8)
 

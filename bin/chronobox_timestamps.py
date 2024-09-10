@@ -2,6 +2,7 @@
 
 import argparse
 import matplotlib.pyplot as plt
+import numpy as np
 import polars as pl
 
 parser = argparse.ArgumentParser(
@@ -26,18 +27,18 @@ df = pl.read_csv(args.chronobox_csv, comment_prefix="#").filter(
     pl.col("leading_edge"),
 )
 
-_, t_edges, _ = plt.hist(df["chronobox_time"], bins=args.t_bins)
-t_bin_width = t_edges[1] - t_edges[0]
-
-plt.xlabel("Chronobox time [s]")
-plt.ylabel("Counts")
-
+t_max = args.t_max if args.t_max < float("inf") else df["chronobox_time"].max()
+t_edges, t_bin_width = np.linspace(args.t_min, t_max, args.t_bins + 1, retstep=True)
 text = "\n".join(
     [
         r"$\bf{Bin\ width:}$" + f" {t_bin_width:.2E} s",
         r"$\bf{Number\ of\ hits:}$" + f" {len(df)}",
     ]
 )
+
+plt.hist(df["chronobox_time"], bins=t_edges)
+plt.xlabel("Chronobox time [s]")
+plt.ylabel("Counts")
 plt.figtext(0.005, 0.01, text, fontsize=6)
 plt.tight_layout()
 

@@ -66,26 +66,32 @@ num_vertices = len(df)
 fig = plt.figure(figsize=(19, 10), dpi=100)
 
 ax = fig.add_subplot(231)
+z_edges, z_bin_width = np.linspace(
+    args.z_min, args.z_max, args.z_bins + 1, retstep=True
+)
+ax.hist(df["reconstructed_z"], bins=z_edges)
 ax.set(xlabel="z [m]", ylabel="Number of vertices")
-ax.hist(df["reconstructed_z"], bins=args.z_bins)
 
 ax = fig.add_subplot(232)
+t_max = args.t_max if args.t_max < float("inf") else df["trg_time"].max()
+t_edges, t_bin_width = np.linspace(args.t_min, t_max, args.t_bins + 1, retstep=True)
+ax.hist(df["trg_time"], bins=t_edges)
 ax.set(xlabel="TRG time [s]", ylabel="Number of vertices")
-ax.hist(df["trg_time"], bins=args.t_bins)
 
 ax = fig.add_subplot(233)
-ax.set(xlabel="TRG time [s]", ylabel="z [m]")
-_, t_edges, z_edges, mesh = ax.hist2d(
-    df["trg_time"], df["reconstructed_z"], bins=[args.t_bins, args.z_bins], cmin=1
+_, _, _, mesh = ax.hist2d(
+    df["trg_time"], df["reconstructed_z"], bins=[t_edges, z_edges], cmin=1
 )
-t_bin_width = t_edges[1] - t_edges[0]
-z_bin_width = z_edges[1] - z_edges[0]
+ax.set(xlabel="TRG time [s]", ylabel="z [m]")
 cbar = fig.colorbar(mesh)
 cbar.set_label("Number of vertices", rotation=270, labelpad=15)
 
 ax = fig.add_subplot(234)
+r_edges, r_bin_width = np.linspace(
+    args.r_min, args.r_max, args.r_bins + 1, retstep=True
+)
+hist, _, _ = ax.hist(df["r"], bins=r_edges)
 ax.set(xlabel="r [m]", ylabel="Number of vertices")
-hist, r_edges, _ = ax.hist(df["r"], bins=args.r_bins)
 ax = ax.twinx()
 ax.set(yticklabels=[])
 norm = hist / (math.pi * (r_edges[1:] ** 2 - r_edges[:-1] ** 2))
@@ -97,18 +103,17 @@ ax.legend(
 )
 
 ax = fig.add_subplot(235)
+phi_edges, phi_bin_width = np.linspace(
+    args.phi_min, args.phi_max, args.phi_bins + 1, retstep=True
+)
+ax.hist(df["phi"], bins=phi_edges)
 ax.set(xlabel="phi [rad]", ylabel="Number of vertices")
-ax.hist(df["phi"], bins=args.phi_bins)
 
 axc = fig.add_subplot(236)
 axc.set(xlabel="x [m]", ylabel="y [m]")
 axc.set_aspect("equal")
-hist, phi_edges, r_edges = np.histogram2d(
-    df["phi"], df["r"], bins=[args.phi_bins, args.r_bins]
-)
+hist, _, _ = np.histogram2d(df["phi"], df["r"], bins=[phi_edges, r_edges])
 hist[hist < 1] = np.nan
-phi_bin_width = phi_edges[1] - phi_edges[0]
-r_bin_width = r_edges[1] - r_edges[0]
 axc.set_xlim(-r_edges[-1], r_edges[-1])
 axc.set_ylim(-r_edges[-1], r_edges[-1])
 ax = fig.add_subplot(236, projection="polar")
