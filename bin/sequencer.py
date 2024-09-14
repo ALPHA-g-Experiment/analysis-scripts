@@ -222,7 +222,7 @@ else:
                 by_left=["board_running", "channel_running"],
                 by_right=["board", "channel"],
                 strategy="nearest",
-                tolerance=2.0,
+                tolerance=5.0,
             )
             .rename({"chronobox_time": "start_time"})
         )
