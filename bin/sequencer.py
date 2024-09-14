@@ -311,10 +311,9 @@ else:
         .rows()
     ):
         print(
-            f"Ignoring mismatched dump markers for `{name}` sequencer.",
+            f"Warning: mismatched dump markers for `{name}` sequencer.",
             file=sys.stderr,
         )
-    result = result.drop_nulls()
 
     if args.output:
         result.write_csv(args.output)
