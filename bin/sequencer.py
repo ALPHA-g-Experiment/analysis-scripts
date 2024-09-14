@@ -291,19 +291,29 @@ else:
         .with_columns(index=pl.int_range(pl.len()).over("sequencer_name", "start_time"))
     )
 
-    result = (
-        observed_df.join(
-            expected_df,
-            on=["sequencer_name", "start_time", "event_name", "index"],
-            how="left",
-        )
-        .with_columns(
-            pl.when(pl.col("event_description").is_null().cum_sum() == 0)
-            .then("event_description")
-            .over("sequencer_name", "start_time")
-        )
-        .select("sequencer_name", "event_name", "event_description", "chronobox_time")
-    )
+    result = pl.concat(
+        [
+            sequencer_df.select(
+                "sequencer_name",
+                event_name=pl.lit("seqRunning"),
+                event_description=pl.lit("Sequence Started"),
+                chronobox_time="start_time",
+            ),
+            observed_df.join(
+                expected_df,
+                on=["sequencer_name", "start_time", "event_name", "index"],
+                how="left",
+            )
+            .with_columns(
+                pl.when(pl.col("event_description").is_null().cum_sum() == 0)
+                .then("event_description")
+                .over("sequencer_name", "start_time")
+            )
+            .select(
+                "sequencer_name", "event_name", "event_description", "chronobox_time"
+            ),
+        ]
+    ).sort("chronobox_time", maintain_order=True)
     for (name,) in (
         result.filter(pl.col("event_description").is_null())
         .select("sequencer_name")
