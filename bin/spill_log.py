@@ -27,13 +27,24 @@ args = parser.parse_args()
 
 windows_df = (
     pl.read_csv(args.sequencer_events_csv)
-    .sort("chronobox_time")
-    .group_by(["sequencer_name", "event_description"])
+    .drop_nulls()
+    .sort("chronobox_time", maintain_order=True)
+    .with_columns(
+        iteration=pl.col("event_name").eq("seqRunning").cum_sum().over("sequencer_name")
+    )
+    .filter(pl.col("event_name").eq("startDump") | pl.col("event_name").eq("stopDump"))
+    .group_by("sequencer_name", "event_description", "iteration")
     .agg(
         start_time=pl.col("chronobox_time").filter(pl.col("event_name") == "startDump"),
         stop_time=pl.col("chronobox_time").filter(pl.col("event_name") == "stopDump"),
     )
-    .explode(["start_time", "stop_time"])
+    .with_columns(
+        min_length=pl.min_horizontal(pl.col("start_time", "stop_time").list.len())
+    )
+    .filter(pl.col("min_length") > 0)
+    .with_columns(pl.col("start_time", "stop_time").list.head("min_length"))
+    .explode("start_time", "stop_time")
+    .drop("iteration", "min_length")
 )
 
 # First 2 lines are comments
