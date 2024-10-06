@@ -123,7 +123,7 @@ cb_spill_log_df = (
     )
 )
 
-trg_scalers_df.sort("trg_time")
+trg_scalers_df = trg_scalers_df.drop_nulls().sort("trg_time")
 trg_spill_log_df = (
     windows_df.sort("start_time")
     .join_asof(
