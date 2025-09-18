@@ -197,6 +197,10 @@ else:
         right_on=["board_running", "channel_running"],
         how="semi",
     )
+    # This is needed because, given that alphasoft doesn't use the `seq_running`
+    # signal, people don't care about it/don't notice if it's not working.
+    # Hence, don't break for sequences with no events.
+    sequencer_df = sequencer_df.filter(pl.col("event_table").list.len() > 0)
     for (shift,) in (
         sequencer_df.select(
             pl.first("midas_timestamp", "board_running", "channel_running")
